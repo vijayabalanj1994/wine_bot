@@ -1,58 +1,122 @@
 version: "3.1"
 
+#----------------------------------------------------------------------------------------------------------------
+#################################################################################################################
+#### list of custom actions the bot knows about.
+#################################################################################################################
+#----------------------------------------------------------------------------------------------------------------
 actions:
-  - action_check_sufficient_funds
+  - action_get_wine_recommendation
+#  - action_handle_alternative_choice
+#  - action_suggest_surprise_wine
 
+#----------------------------------------------------------------------------------------------------------------
+#################################################################################################################
+#### slots (variables) stored during the conversation.
+#################################################################################################################
+#----------------------------------------------------------------------------------------------------------------
 slots:
-  recipient:
+#----------------------------------------------------------------------------------------------------------------
+## collecting user preferences
+#----------------------------------------------------------------------------------------------------------------
+  food_pairing:
     type: text
     mappings:
       - type: from_llm
 
-  amount:
-    type: float
+  occasion:
+    type: text
     mappings:
       - type: from_llm
 
-  final_confirmation:
-    type: bool
+  taste_preference:
+    type: categorical
+    values:
+      - bold
+      - sweet
+      - crisp
+      - rich
     mappings:
       - type: from_llm
-
-  has_sufficient_funds:
-    type: bool
+#----------------------------------------------------------------------------------------------------------------
+## storing details about the recommended wine.
+#----------------------------------------------------------------------------------------------------------------
+  wine_name:
+    type: text
     mappings:
       - type: custom
 
+  wine_description:
+    type: text
+    mappings:
+      - type: custom
+
+  wine_price:
+    type: text
+    mappings:
+      - type: custom
+##----------------------------------------------------------------------------------------------------------------
+### storing values for business logit.
+##----------------------------------------------------------------------------------------------------------------
+#  purchase_decision:
+#    type: bool
+#    description: |
+#      The user's decision on whether to purchase the recommended wine.
+#      - True if they accept the recommendation
+#      - False if they want another option
+#    mappings:
+#      - type: from_llm
+#
+#  alternative_choice:
+#    type: categorical
+#    values:
+#      - new_recommendation
+#      - surprise_me
+#    description: |
+#      The user’s preference if they reject the first wine recommendation.
+#      - "new_recommendation" means they want a different wine
+#      - "surprise_me" means they want the bot to suggest a random high-rated wine
+#    mappings:
+#      - type: from_llm
+
+#----------------------------------------------------------------------------------------------------------------
+#################################################################################################################
+#### responses - list of things the bot can say to the user
+#################################################################################################################
+#----------------------------------------------------------------------------------------------------------------
 responses:
-  utter_ask_recipient:
-    - text: "Who would you like to send money to?"
+#----------------------------------------------------------------------------------------------------------------
+## asking questions about preferences
+#----------------------------------------------------------------------------------------------------------------
+  utter_ask_food_pairing:
+    - text: "What food are you pairing the wine with?"
+  utter_ask_occasion:
+    - text: "What's the occasion? Romantic dinner, birthday, casual evening, or something else?"
+  utter_ask_taste_preference:
+    - text: "How do you like your wine? Bold & dry, sweet & fruity, crisp & refreshing, or rich & velvety?"
+#----------------------------------------------------------------------------------------------------------------
+## conforming user preferences
+#----------------------------------------------------------------------------------------------------------------
+  utter_confirm_preferences:
+    - text: "Great! So you're looking for a **{taste_preference}** wine for a **{occasion}**, paired with **{food_pairing}**. Let me find the perfect match!"
+#----------------------------------------------------------------------------------------------------------------
+## recommending a wine or fallback wine recommendation
+#----------------------------------------------------------------------------------------------------------------
+  utter_recommend_wine:
+    - text: "I recommend **{wine_name}**! \n{wine_description} \nPrice: **£{wine_price}**."
+  utter_fallback_recommendation:
+    - text: "Hmm, I couldn't find a perfect match. Would you like to try a popular red wine instead?"
 
-  utter_ask_amount:
-    - text: "How much money would you like to send?"
 
-  utter_ask_final_confirmation:
-    - text: "Please confirm: you want to transfer {amount} to {recipient}?"
-
-  utter_transfer_complete:
-    - text: "All done. {amount} has been sent to {recipient}."
-
-  utter_transfer_cancelled:
-    - text : "Your transfer has been cancelled."
-
-  utter_insufficient_funds:
-    - text: "You do not have enough funds to make this transaction."
-
-  utter_free_chitchat_response:
-    - text: "placeholder"
-      metadata:
-        rephrase: True
-        rephrase_prompt: |
-          The following is a conversation with an AI assistant built with Rasa.
-          The assistant can help the user transfer money.
-          The assistant is helpful, creative, clever, and very friendly.
-          The user is making small talk, and the assistant should respond, keeping things light.
-          Context / previous conversation with the user:
-          {{history}}
-          {{current_input}}
-          Suggested AI Response:
+#  utter_free_chitchat_response:
+#    - text: "placeholder"
+#      metadata:
+#        rephrase: True
+#        rephrase_prompt: |
+#          The following is a conversation with an AI assistant built with Rasa.
+#          The assistant specializes in wine recommendations and is friendly and engaging.
+#          The user is making small talk, and the assistant should respond, keeping things light.
+#          Context / previous conversation with the user:
+#          {{history}}
+#          {{current_input}}
+#          Suggested AI Response:

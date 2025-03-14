@@ -1,24 +1,49 @@
 flows:
-  transfer_money:
-    description: Help users send money to friends and family.
+#----------------------------------------------------------------------------------------------------------------
+## a flow to collect user preferences
+#----------------------------------------------------------------------------------------------------------------
+  flow_collect_preferences:
+    description: |
+      Collects all necessary information from the user about their wine preference.
+      The system will use LLM to extract food, occasion, and taste preferences in one go if possible.
+      If any data is missing, it will ask only for the missing pieces.
+    persisted_slots:
+      - occasion
+      - food_pairing
+      - taste_preference
     steps:
-      - collect: recipient
-      - collect: amount
-        description: the number of US dollars to send
-      - action: action_check_sufficient_funds
+      - collect: occasion
+        description: Extracts the occasion or event for which the user is buying the wine. Examples - romantic dinner, birthday celebration, casual evening with friends.
+      - collect: food_pairing
+        description: Extracts the type of food the user is pairing the wine with. Examples - steak, seafood, cheese platter, pasta with red sauce.
+      - collect: taste_preference
+        description: Extracts the user's preferred wine taste profile (e.g., bold, sweet, crisp, or rich).
+      - action: utter_confirm_preferences
+      - call: flow_generate_recommendation
+        next: END
+
+#----------------------------------------------------------------------------------------------------------------
+## a flow to generate wine recommendation vial a API call to GPT-4
+#----------------------------------------------------------------------------------------------------------------
+  flow_generate_recommendation:
+    description: |
+      Only activated form a call step from flow_collect_preferences
+      Calls GPT-4 to generate a wine recommendation based on user preferences.
+      If a recommendation is not available, the bot will provide a fallback suggestion.
+    steps:
+      - action: action_get_wine_recommendation
         next:
-          - if: not slots.has_sufficient_funds
-            then:
-              - action: utter_insufficient_funds
+          - if: slots.wine_name
+            then: recommend_wine
+          - else:
+              - action: utter_fallback_recommendation
                 next: END
-          - else: final_confirmation
-      - collect: final_confirmation
-        id: final_confirmation
-        next:
-          - if: not slots.final_confirmation
-            then:
-              - action: utter_transfer_cancelled
-                next: END
-          - else: transfer_successful
-      - action: utter_transfer_complete
-        id: transfer_successful
+      - action: utter_recommend_wine
+        id: recommend_wine
+#      - collect: purchase_decision
+#        description: Determines if the user wants to buy the recommended wine.
+#        optional: true
+#        next:
+#          - if: slots.purchase_decision
+#            then: END
+#          - else: more_options
